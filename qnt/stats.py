@@ -652,6 +652,14 @@ def get_default_slippage(data):
     return 0.05
 
 
+def get_default_max_exposure(name):
+    if name == 'stocks_s&p500':
+        return float(get_env('ME_STOCKS_S&P500', '0.1', True))
+    elif name == 'stocks_nasdaq100':
+        return float(get_env('ME_STOCKS_NASDAQ100', '0.1', True))
+    else:
+        return 1.0
+
 def calc_points_per_day(days_per_year):
     if days_per_year < 400:
         return 1

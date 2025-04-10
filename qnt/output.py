@@ -3,11 +3,14 @@ import xarray as xr
 import pandas as pd
 import gzip
 
+import qnt.stats as qns
+import qnt.exposure as qne
+from qnt.data.common import ds, f, track_event, get_env
 from qnt.log import log_info, log_err, Settings as LogSettings
+from qnt.data.id_translation import translate_user_id_to_server_id
 
 
 def normalize(output, per_asset=False):
-    from qnt.data.common import ds
     output = output.where(np.isfinite(output)).fillna(0)
     if ds.TIME in output.dims:
         output = output.transpose(ds.TIME, ds.ASSET)
@@ -29,7 +32,7 @@ def normalize(output, per_asset=False):
     return output
 
 
-def clean(output, data, kind=None, debug=True):
+def clean(output, data, kind=None, normalize_by_max_exp=False):
     """
     Checks the output and fix common errors:
         - liquidity
@@ -39,12 +42,10 @@ def clean(output, data, kind=None, debug=True):
     :param output:
     :param data:
     :param kind:
+    :param normalize_by_max_exp: Cut the highest daily weight to max_exposure value, and all other weights are scaled
+                                    proportionally to preserve relative differences.
     :return:
     """
-    import qnt.stats as qns
-    import qnt.exposure as qne
-    from qnt.data.common import ds, f, track_event
-
     if kind is None:
         kind = data.name
 
@@ -140,6 +141,11 @@ def clean(output, data, kind=None, debug=True):
                 log_info("Ok.")
 
         log_info("Normalization...")
+        max_exposure = qns.get_default_max_exposure(kind)
+        if normalize_by_max_exp:
+            output = qne.normalize_by_max_exposure(output, max_exposure)
+        else:
+            output = qne.cut_big_positions(output, max_exposure)
         output = normalize(output)
         log_info("Output cleaning is complete.")
 
@@ -151,9 +157,6 @@ def check(output, data, kind=None, check_correlation=True):
     This function checks your output and warn you if it contains errors.
     :return:
     """
-    import qnt.stats as qns
-    from qnt.data.common import ds, f, get_env, track_event
-
     if kind is None:
         kind = data.name
 
@@ -256,8 +259,6 @@ def calc_sharpe_ratio_for_check(data, output, kind=None, check_dates=True):
     :param check_dates: do you need to check the sharpe ratio dates?
     :return:
     """
-    import qnt.stats as qns
-
     if kind is None:
         kind = data.name
 
@@ -293,10 +294,8 @@ def write(output):
     writes output in the file for submission
     :param output: xarray with daily weights
     """
-    import qnt.data.id_translation as idt
-    from qnt.data.common import ds, get_env, track_event
     output = output.copy()
-    output.coords[ds.ASSET] = [idt.translate_user_id_to_server_id(id) for id in output.coords[ds.ASSET].values]
+    output.coords[ds.ASSET] = [translate_user_id_to_server_id(id) for id in output.coords[ds.ASSET].values]
     output = normalize(output)
     data = output.to_netcdf(compute=True)
     data = gzip.compress(data)
