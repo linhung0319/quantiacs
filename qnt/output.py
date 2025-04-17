@@ -245,7 +245,7 @@ def check(output, data, kind=None, check_correlation=True):
 
                 if check_correlation:
                     log_info("Check correlation.")
-                    qns.check_correlation(output, data, print_stack_trace=False)
+                    qns.check_correlation(output, data, kind, print_stack_trace=False)
     except Exception as e:
         log_err(e)
 

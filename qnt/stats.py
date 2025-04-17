@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 import gzip, base64, json
-from urllib import request
+from urllib import request, parse
 from tabulate import tabulate
 import numba
 import sys, os
@@ -660,6 +660,7 @@ def get_default_max_exposure(name):
     else:
         return 1.0
 
+
 def calc_points_per_day(days_per_year):
     if days_per_year < 400:
         return 1
@@ -845,14 +846,16 @@ def calc_sector_distribution(portfolio_history, timeseries=None, kind=None):
     return sector_distr
 
 
-def check_correlation(portfolio_history, data, print_stack_trace=True):
+def check_correlation(portfolio_history, data, competition_type=None, print_stack_trace=True):
     """ Checks correlation for current output. """
+    if competition_type is None:
+        competition_type = data.name
     track_event("CHECK_CORRELATION")
     portfolio_history = output_normalize(portfolio_history)
     rr = calc_relative_return(data, portfolio_history)
 
     try:
-        cr_list = calc_correlation(rr, False)
+        cr_list = calc_correlation(rr, competition_type, False)
     except:
         import logging
         if print_stack_trace:
@@ -904,7 +907,7 @@ def check_correlation(portfolio_history, data, print_stack_trace=True):
 print_correlation = check_correlation
 
 
-def calc_correlation(relative_returns, suppress_exception=True):
+def calc_correlation(relative_returns, competition_type, suppress_exception=True):
     try:
         if "SUBMISSION_ID" in os.environ and os.environ["SUBMISSION_ID"] != "":
             log_info("correlation check disabled")
@@ -914,8 +917,14 @@ def calc_correlation(relative_returns, suppress_exception=True):
                                          "https://quantiacs.io/referee/submission/forCorrelation")
         STATAN_CORRELATION_URL = get_env("STATAN_CORRELATION_URL", "https://quantiacs.io/statan/correlation")
         PARTICIPANT_ID = get_env("PARTICIPANT_ID", "0")
+        correlation_params = {
+            'participantId': PARTICIPANT_ID,
+            'competitionType': competition_type,
+        }
+        correlation_query = parse.urlencode(correlation_params)
+        correlation_url = f"{ENGINE_CORRELATION_URL}?{correlation_query}"
 
-        with request.urlopen(ENGINE_CORRELATION_URL + "?participantId=" + PARTICIPANT_ID) as response:
+        with request.urlopen(correlation_url) as response:
             submissions = response.read()
             submissions = json.loads(submissions)
             submission_ids = [s['id'] for s in submissions]
@@ -927,7 +936,7 @@ def calc_correlation(relative_returns, suppress_exception=True):
 
         cofactors = []
 
-        chunks = [submission_ids[x:x + 50] for x in range(0, len(submission_ids), 50)]
+        chunks = [submission_ids[x:x + 1000] for x in range(0, len(submission_ids), 1000)]
 
         for c in chunks:
             r = {"relative_returns": rr, "submission_ids": c}
