@@ -29,12 +29,14 @@ Quantiacs hosts a variety of quant competitions, catering to different asset cla
   the top 10 cryptocurrencies.
 - [The Crypto Top-10 Long-Short Contest](https://quantiacs.com/leaderboard/17): Involves both long and short positions
   in the top 10 cryptocurrencies.
-- [The NASDAQ-100 Long-Short contest](https://quantiacs.com/leaderboard/21):  A specialized contest focusing on
+- [The NASDAQ-100 Long-Short Contest](https://quantiacs.com/leaderboard/21):  A specialized contest focusing on
   long-short strategies in the NASDAQ-100, emphasizing fundamental analysis.
+- [The S&P500 Long-Short Contest](https://quantiacs.com/leaderboard/22):  A specialized contest focusing on
+  long-short strategies in the S&P500.
 
 ### Current Opportunity
 
-- [The Q22 S&P500 Long-Short contest](https://quantiacs.com/contest): A specialized contest focusing on
+- [The Q23 S&P500 Long-Short Contest](https://quantiacs.com/contest): A specialized contest focusing on
   long-short strategies in the S&P500.
 
 Since 2014, Quantiacs has hosted numerous quantitative trading contests, allocating over 38 million USD to winning

@@ -63,7 +63,7 @@ def calculate_weights(data):
     weights_new = get_enough_bid_for(weights_all)
     weights_new = weights_new.sel(time=slice("2006-01-01", None))
 
-    return qnout.clean(output=weights_new, data=data, kind="stocks_nasdaq100")
+    return qnout.clean(output=weights_new, data=data, kind="stocks_nasdaq100", debug=True)
 
 
 def calculate_weights_ta(data):
@@ -238,67 +238,83 @@ class TestBaseStatistic(unittest.TestCase):
                                      'primaryKey': ['time']}}, json.loads(stat_head))
 
         stat_tail = stat.to_pandas().tail().to_json(orient="table")
-        self.assertEqual({'data': [{'avg_holding_time': 11.4334672231,
-                                    'avg_turnover': 0.1709156431,
+        self.assertEqual({'data': [{'avg_holding_time': 16.8844344849,
+                                    'avg_turnover': 0.0610201339,
                                     'bias': 1.0,
-                                    'equity': 60.1058753093,
+                                    'equity': 3.7135680884,
                                     'instruments': 214.0,
-                                    'max_drawdown': -0.3918111995,
-                                    'mean_return': 0.2589817235,
-                                    'relative_return': -0.0132098125,
-                                    'sharpe_ratio': 1.0512328839,
+                                    'max_drawdown': -0.3130021761,
+                                    'mean_return': 0.0765555984,
+                                    'relative_return': -0.0053127086,
+                                    'sharpe_ratio': 0.5919533879,
                                     'time': '2023-10-20T00:00:00.000',
-                                    'underwater': -0.1747530725,
-                                    'volatility': 0.2463599907},
-                                   {'avg_holding_time': 11.4270481715,
-                                    'avg_turnover': 0.1711531269,
+                                    'underwater': -0.0379201919,
+                                    'volatility': 0.129327072},
+                                   {'avg_holding_time': 16.8900641848,
+                                    'avg_turnover': 0.0610518392,
                                     'bias': 1.0,
-                                    'equity': 59.8281280711,
+                                    'equity': 3.7051093094,
                                     'instruments': 214.0,
-                                    'max_drawdown': -0.3918111995,
-                                    'mean_return': 0.2585893223,
-                                    'relative_return': -0.0046209665,
-                                    'sharpe_ratio': 1.0497416282,
+                                    'max_drawdown': -0.3130021761,
+                                    'mean_return': 0.076399895,
+                                    'relative_return': -0.0022778037,
+                                    'sharpe_ratio': 0.5908086048,
                                     'time': '2023-10-23T00:00:00.000',
-                                    'underwater': -0.1785665109,
-                                    'volatility': 0.2463361606},
-                                   {'avg_holding_time': 11.4260866278,
-                                    'avg_turnover': 0.1711702456,
+                                    'underwater': -0.0401116208,
+                                    'volatility': 0.1293141204},
+                                   {'avg_holding_time': 16.8838266513,
+                                    'avg_turnover': 0.061061024,
                                     'bias': 1.0,
-                                    'equity': 59.6803868318,
+                                    'equity': 3.7087288068,
                                     'instruments': 214.0,
-                                    'max_drawdown': -0.3918111995,
-                                    'mean_return': 0.2583499052,
-                                    'relative_return': -0.0024694277,
-                                    'sharpe_ratio': 1.0488807224,
+                                    'max_drawdown': -0.3130021761,
+                                    'mean_return': 0.0764412895,
+                                    'relative_return': 0.0009768935,
+                                    'sharpe_ratio': 0.5911942171,
                                     'time': '2023-10-24T00:00:00.000',
-                                    'underwater': -0.1805949816,
-                                    'volatility': 0.2463100901},
-                                   {'avg_holding_time': 11.4260866278,
-                                    'avg_turnover': 0.1711329854,
+                                    'underwater': -0.039173912,
+                                    'volatility': 0.1292997923},
+                                   {'avg_holding_time': 16.8838266513,
+                                    'avg_turnover': 0.0610477421,
                                     'bias': 1.0,
-                                    'equity': 58.8273082956,
+                                    'equity': 3.691339489,
                                     'instruments': 214.0,
-                                    'max_drawdown': -0.3918111995,
-                                    'mean_return': 0.257267962,
-                                    'relative_return': -0.0142941187,
-                                    'sharpe_ratio': 1.0444909681,
+                                    'max_drawdown': -0.3130021761,
+                                    'mean_return': 0.0761393989,
+                                    'relative_return': -0.0046887542,
+                                    'sharpe_ratio': 0.5889001834,
                                     'time': '2023-10-25T00:00:00.000',
-                                    'underwater': -0.1923076542,
-                                    'volatility': 0.2463094175},
-                                   {'avg_holding_time': 11.4052568064,
-                                    'avg_turnover': 0.1711003015,
+                                    'underwater': -0.0436789894,
+                                    'volatility': 0.1292908392},
+                                   {'avg_holding_time': 16.8564975495,
+                                    'avg_turnover': 0.0610355464,
                                     'bias': 1.0,
-                                    'equity': 59.7372670849,
+                                    'equity': 3.6880139615,
                                     'instruments': 214.0,
-                                    'max_drawdown': -0.3918111995,
-                                    'mean_return': 0.2582883243,
-                                    'relative_return': 0.0154683057,
-                                    'sharpe_ratio': 1.0486492544,
+                                    'max_drawdown': -0.3130021761,
+                                    'mean_return': 0.0760673127,
+                                    'relative_return': -0.0009008999,
+                                    'sharpe_ratio': 0.5884067341,
                                     'time': '2023-10-26T00:00:00.000',
-                                    'underwater': -0.1798140221,
-                                    'volatility': 0.246305734}],
+                                    'underwater': -0.0445405389,
+                                    'volatility': 0.1292767541}],
                           'schema': schema_global}, json.loads(stat_tail))
+
+    def test_check(self):
+        dir = os.path.abspath(os.curdir)
+
+        dims = ['field', 'time', 'asset']
+        data = load_data_and_create_data_array(f"{dir}/data/data_2005-01-01.nc", dims, dims)
+
+        weights = data.sel(field="high") - data.sel(field="high")
+        weights = weights.fillna(0)
+        qnout.check(output=weights, data=data, kind="stocks_nasdaq100")
+
+        weights[:, :3] = 10
+        print(weights)
+
+        qnout.check(output=weights, data=data, kind="stocks_s&p500")
+        self.assertEqual(True, True)
 
     def test_ta(self):
         dir = os.path.abspath(os.curdir)
