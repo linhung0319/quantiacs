@@ -749,7 +749,7 @@ def build_plots_dash(output, stat_global, stat_per_asset):
         from threading import Timer
         Timer(1, lambda: webbrowser.open("http://127.0.0.1:" + os.environ.get('PORT', '8050'), new=2)).start()
 
-        app.run_server(dev_tools_hot_reload=False)
+        app.run(dev_tools_hot_reload=False)
     except:
         import logging
         logging.exception("can't start dash")

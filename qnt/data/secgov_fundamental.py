@@ -343,7 +343,7 @@ def build_ebitda_use_income_before_taxes(fundamental_facts: xr.DataArray) -> xr.
 
 def build_ebitda_use_operating_income(fundamental_facts: xr.DataArray) -> xr.DataArray:
     interest_expense = build_interest_expense(fundamental_facts)
-    merged_interest_expense = xr.where(~np.isnan(xr.where(interest_expense != 0, interest_expense, np.NaN)),
+    merged_interest_expense = xr.where(~np.isnan(xr.where(interest_expense != 0, interest_expense, np.nan)),
                                        interest_expense,
                                        build_income_interest(fundamental_facts)).fillna(0)
 
