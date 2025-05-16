@@ -15,9 +15,9 @@ setup(
         'tabulate>=0.9.0,<1.0.0',
         'bottleneck>=1.4.2,<2.0.0',
         'numba>=0.59.0,<1.0.0',
-        'progressbar2>=3.55,<4',
+        'progressbar2>=3.55,<5',
         'cftime>=1.6.4,<2.0.0',
         'plotly>=5.22,<7.0',
-        'matplotlib>=3.10.1,<4.0.0'
+        'matplotlib>=3.10.0,<4.0.0'
     ]
 )
