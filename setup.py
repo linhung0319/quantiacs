@@ -17,7 +17,7 @@ setup(
         'numba>=0.59.0,<1.0.0',
         'progressbar2>=3.55,<4',
         'cftime>=1.6.4,<2.0.0',
-        'plotly>=5.22,<6.1',
+        'plotly>=5.22,<7.0',
         'matplotlib>=3.10.1,<4.0.0'
     ]
 )
