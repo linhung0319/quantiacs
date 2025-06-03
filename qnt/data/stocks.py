@@ -9,7 +9,7 @@ def load_list(
         min_date: tp.Union[str, datetime.date, None] = None,
         max_date: tp.Union[str, datetime.date, None] = None,
         tail: tp.Union[datetime.timedelta, float, int] = 4 * 365,
-        stocks_type:tp.Union[str, int] = ''
+        stocks_type: tp.Union[str, int] = ''
 ):
     """
     :return: list of dicts with info for all tickers
@@ -58,7 +58,7 @@ def load_spx_list(min_date: tp.Union[str, datetime.date, None] = None,
 
 
 def load_data(
-        assets: tp.List[tp.Union[dict,str]] = None,
+        assets: tp.List[tp.Union[dict, str]] = None,
         min_date: tp.Union[str, datetime.date, None] = None,
         max_date: tp.Union[str, datetime.date, None] = None,
         dims: tp.Tuple[str, str, str] = (ds.FIELD, ds.TIME, ds.ASSET),
@@ -173,8 +173,9 @@ def load_origin_data(assets=None, min_date=None, max_date=None,
         assets_array = load_list(min_date=min_date, max_date=max_date, tail=tail, stocks_type=stocks_type)
         assets_arg = [a['id'] for a in assets_array]
     else:
-        if not idt.is_asset_ids_cache_exist():
-            load_list(min_date="2005-01-01", stocks_type=stocks_type)
+        DEFAULT_MIN_DATE = "2005-01-01"
+        if not idt.is_asset_ids_cache_exist() or not idt.has_asset_id_translations(assets):
+            load_list(min_date=DEFAULT_MIN_DATE, stocks_type=stocks_type)
 
         assets = [a['id'] if type(a) == dict else a for a in assets]
         assets_arg = assets
@@ -225,14 +226,14 @@ def load_origin_data(assets=None, min_date=None, max_date=None,
         else [f.OPEN, f.LOW, f.HIGH, f.CLOSE, f.VOL, f.DIVS, f.SPLIT, f.SPLIT_CUMPROD, f.IS_LIQUID]
     if len(chunks) == 0:
         whole = xr.DataArray(
-            [[[np.nan]]]*len(fields),
+            [[[np.nan]]] * len(fields),
             dims=[ds.FIELD, ds.TIME, ds.ASSET],
             coords={
                 ds.FIELD: fields,
                 ds.TIME: pd.DatetimeIndex([max_date]),
                 ds.ASSET: ['ignore']
             }
-        )[:,1:,1:]
+        )[:, 1:, 1:]
     else:
         whole = xr.concat(chunks, ds.ASSET)
 
@@ -240,7 +241,7 @@ def load_origin_data(assets=None, min_date=None, max_date=None,
 
     if assets is not None:
         assets = sorted(assets)
-        assets = xr.DataArray(assets, dims=[ds.ASSET], coords={ds.ASSET:assets})
+        assets = xr.DataArray(assets, dims=[ds.ASSET], coords={ds.ASSET: assets})
         whole = whole.broadcast_like(assets)
 
     whole = whole.transpose(ds.FIELD, ds.TIME, ds.ASSET)

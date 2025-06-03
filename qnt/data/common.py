@@ -212,6 +212,10 @@ def cache_put(value, *args):
 
 def crop_cache():
     global cache_min_mod_time
+    if not os.path.isdir(CACHE_DIR):
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        cache_min_mod_time = None
+        return
     now = datetime.datetime.now()
     if cache_min_mod_time is not None and datetime.datetime.now() - cache_min_mod_time < CACHE_RETENTION:
         return
