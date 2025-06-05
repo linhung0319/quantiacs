@@ -54,7 +54,7 @@ and ease of managing dependencies.
 2. **Create a QNT Development Environment**:
     - Open your terminal and run:
       ```bash
-      conda create -n qntdev -c conda-forge -c quantiacs-source 'python>=3.10,<3.11' 'ipywidgets=8.1.3' 'nbformat>=4.2.0' ipykernel ta-lib qnt dash
+      conda create -n qntdev -c conda-forge 'python>=3.11,<3.14' 'ipywidgets=8.1.7' 'nbformat>=5.10.4' ipykernel ta-lib 'quantiacs-source::qnt' dash
       conda activate qntdev
       ```
     - *Optional*: Prevent auto-activation of this environment:
@@ -118,7 +118,7 @@ Installation instructions are the same as for Using QNT from Github.
 In step two, run the command
 
 ```bash
-conda create -n qntdev -c conda-forge -c quantiacs-source 'python>=3.10,<3.11' 'ipywidgets=8.1.3' 'nbformat>=4.2.0' ipykernel ta-lib qnt dash
+conda create -n qntdev -c conda-forge 'python>=3.11,<3.14' 'ipywidgets=8.1.7' 'nbformat>=5.10.4' ipykernel ta-lib 'quantiacs-source::qnt' dash
 ```
 
 ### Updating the conda environment
@@ -148,14 +148,14 @@ libraries.
       and [`pyenv-virtualenv`](https://github.com/pyenv/pyenv-virtualenv) installed.
     - Run the following command in your terminal:
       ```bash
-      pyenv install 3.10.14 && \
-      pyenv virtualenv 3.10.14 name_of_environment && \
+      pyenv install 3.11.13 && \
+      pyenv virtualenv 3.11.13 name_of_environment && \
       pyenv local name_of_environment && \
-      python -m pip install 'ipywidgets==8.1.3' 'nbformat>=4.2.0' dash ipykernel git+https://github.com/quantiacs/toolbox.git
+      python -m pip install 'ipywidgets==8.1.7' 'nbformat>=5.10.4' dash ipykernel git+https://github.com/quantiacs/toolbox.git
       ```
 
    This command will:
-    - Install Python 3.10.14.
+    - Install Python 3.11.13.
     - Create a virtual environment named `name_of_environment`.
     - Activate the environment for the current directory.
     - Install the Quantiacs toolbox and other necessary Python libraries.
