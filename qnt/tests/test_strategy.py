@@ -4,6 +4,9 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 
+from io import StringIO
+from unittest.mock import patch
+
 import json
 import os
 
@@ -1093,6 +1096,74 @@ class TestBaseStatistic(unittest.TestCase):
         weights_single_pass = weights_single_pass.sel(time=slice('2006-01-01', '2006-02-01'))
         dif = (weights_milti_pass - weights_single_pass).sum().values
         self.assertEqual(dif, 0)
+
+
+class TestOutput(unittest.TestCase):
+    def test_check_exposure(self):
+        dir = os.path.abspath(os.curdir)
+        dims = ['field', 'time', 'asset']
+        data = load_data_and_create_data_array(f"{dir}/data/data_2005-01-01.nc", dims, dims)
+        data.name = 'stocks_nasdaq100'
+
+        assets = ["NAS:AAPL", "NAS:TSLA", "NAS:ADBE", "NAS:MSFT", "NAS:NVDA"]
+        time = data.time.values
+        vals = 0.044 * np.ones((len(assets), len(time)))
+
+        weights = xr.DataArray(
+            vals,
+            coords={'asset': assets, 'time': time},
+            dims=['asset', 'time'],
+            name='stocks_nasdaq100'
+        )
+
+        exposure = weights.max().item()
+        max_exposure = qnstats.get_default_max_exposure(weights.name)
+
+        self.assertTrue(exposure < max_exposure)
+
+        with patch('sys.stdout', new=StringIO()) as fake_out, patch('sys.stderr', new=StringIO()) as fake_err:
+            qnout.check(output=weights, data=data, check_correlation=False)
+            output = fake_out.getvalue() + fake_err.getvalue()
+            self.assertNotIn("ERROR! The max exposure is too high.", output)
+
+        weights_high = weights + max_exposure
+        new_exposure = weights_high.max().item()
+
+        self.assertTrue(new_exposure > max_exposure)
+
+        with patch('sys.stderr', new=StringIO()) as fake_err:
+            qnout.check(output=weights_high, data=data, check_correlation=False)
+            output = fake_err.getvalue()
+            self.assertIn("ERROR! The max exposure is too high.", output)
+
+
+    def test_clean_output(self):
+        dir = os.path.abspath(os.curdir)
+        dims = ['field', 'time', 'asset']
+        data = load_data_and_create_data_array(f"{dir}/data/data_2005-01-01.nc", dims, dims)
+        data.name = 'stocks_nasdaq100'
+
+        assets = ["NAS:AAPL", "NAS:TSLA", "NAS:ADBE", "NAS:MSFT", "NAS:NVDA"]
+        time = data.time.values
+        vals = - 1.44 * np.ones((len(assets), len(time)))
+
+        weights = xr.DataArray(
+            vals,
+            coords={'asset': assets, 'time': time},
+            dims=['asset', 'time'],
+            name='stocks_nasdaq100'
+        )
+
+        exposure = abs(weights).max().item()
+        max_exposure = qnstats.get_default_max_exposure(weights.name)
+        self.assertTrue(exposure > max_exposure)
+
+        output = qnout.clean(weights, data)
+        new_exposure = abs(output).max().item()
+        self.assertTrue(new_exposure <= max_exposure)
+
+        total_exposure = abs(output).sum("asset").max().item()
+        self.assertTrue(total_exposure <= 1.0)
 
 
 if __name__ == '__main__':
