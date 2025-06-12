@@ -211,14 +211,13 @@ def check(output, data, kind=None, check_correlation=True):
 
         if kind in ["stocks_nasdaq100", "stocks_s&p500"]:
             log_info("Check max exposure for index stocks (nasdaq100, s&p500)…")
+            normalized_output = normalize(output)
             hard_limit = qns.get_default_max_exposure(kind)
+            max_exposure = abs(normalized_output).max().item()
 
-            exposure = qns.calc_exposure(output)
-            max_exposure = exposure.max(ds.ASSET)
-            hard_limit_ok = xr.where(max_exposure > hard_limit, 1, 0).sum().values == 0
-            if not hard_limit_ok:
+            if max_exposure > hard_limit:
                 log_err("ERROR! The max exposure is too high.")
-                log_err(f"Max exposure: {max_exposure.values} Hard limit: {hard_limit}")
+                log_err(f"Max exposure: {max_exposure} Hard limit: {hard_limit}")
                 log_err("Use qnt.output.cut_big_positions() or normalize_by_max_exposure() to fix.")
             else:
                 log_info("Ok.")
