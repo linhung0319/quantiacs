@@ -92,6 +92,7 @@ def max_hold_long(weights, state, max_period):
     prev_pos = weights.isel(time=-2)
 
     holding_time_prev = state['holding_time']
+    holding_time_prev = holding_time_prev.reindex_like(curr_pos, fill_value=0)
 
     reset_or_increase = xr.where(holding_time_prev >= max_period, 0, holding_time_prev + 1)
 
@@ -110,6 +111,7 @@ def max_hold_short(weights, state, max_period):
     prev_pos = weights.isel(time=-2)
 
     holding_time_prev = state['holding_time']
+    holding_time_prev = holding_time_prev.reindex_like(curr_pos, fill_value=0)
 
     reset_or_increase = xr.where(holding_time_prev >= max_period, 0, holding_time_prev + 1)
     holding_time = xr.where(curr_pos < 0, reset_or_increase, holding_time_prev)
