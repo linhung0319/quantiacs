@@ -50,9 +50,12 @@ def clean(output, data, kind=None, debug=True):
         kind = data.name
 
     if kind != data.name:
-        log_err("WARNING! The kind of the data and the output are different.")
-        log_err("The kind of the data is " + str(data.name) + " and the kind of the output is " + str(kind))
-        log_err("The output will be cleaned with the data kind.")
+        if data.name == 'cryptodaily' and kind in ['crypto_daily', 'crypto_daily_long', 'crypto_daily_long_short']:
+            pass
+        else:
+            log_err("WARNING! The kind of the data and the output are different.")
+            log_err("The kind of the data is " + str(data.name) + " and the kind of the output is " + str(kind))
+            log_err("The output will be cleaned with the data kind.")
 
     output = output.drop_vars(ds.FIELD, errors='ignore')
 
@@ -173,9 +176,12 @@ def check(output, data, kind=None, check_correlation=True):
         kind = data.name
 
     if kind != data.name:
-        log_err("WARNING! The kind of the data and the output are different.")
-        log_err("The kind of the data is " + str(data.name) + " and the kind of the output is " + str(kind))
-        log_err("The output will be cleaned with the data kind.")
+        if data.name == 'cryptodaily' and kind in ['crypto_daily', 'crypto_daily_long', 'crypto_daily_long_short']:
+            pass
+        else:
+            log_err("WARNING! The kind of the data and the output are different.")
+            log_err("The kind of the data is " + str(data.name) + " and the kind of the output is " + str(kind))
+            log_err("The output will be cleaned with the data kind.")
 
     single_day = ds.TIME not in output.dims
     if single_day:

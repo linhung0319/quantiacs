@@ -628,7 +628,7 @@ def get_default_is_start_date_for_type(name):
     if name == 'cryptofutures' or name == 'crypto_futures':
         return get_env('SD_CRYPTOFUTURES', '2014-01-01', True)
     if name == 'cryptodaily' or name == 'crypto_daily' or name == 'crypto_daily_long' or name == 'crypto_daily_long_short':
-        return get_env('SD_CRYPTODAILY', '2014-01-01', True)
+        return get_env('SD_CRYPTODAILY', '2016-01-01', True)
     if name == 'crypto':
         return get_env('SD_CRYPTO', '2014-01-01', True)
     return None
