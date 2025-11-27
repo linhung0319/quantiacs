@@ -178,7 +178,7 @@ def load_weights_list():
 
 
 def load_weights(
-        index_name: str,
+        index: str,
         min_date: tp.Union[str, datetime.date, None] = None,
         max_date: tp.Union[str, datetime.date, None] = None,
         dims: tp.Tuple[str, str] = (ds.TIME, ds.ASSET),
@@ -188,7 +188,7 @@ def load_weights(
 
     """
     Load index constituents weights (benchmark).
-    :param index_name:
+    :param index:
     :param min_date:
     :param max_date:
     :param dims:
@@ -205,7 +205,7 @@ def load_weights(
         min_date = max_date - parse_tail(tail)
 
 
-    params = {"benchmark": index_name, "min_date": min_date.isoformat(), "max_date": max_date.isoformat()}
+    params = {"benchmark": index, "min_date": min_date.isoformat(), "max_date": max_date.isoformat()}
     params = json.dumps(params)
     params = params.encode()
     raw = request_with_retry("idx/data", params)
