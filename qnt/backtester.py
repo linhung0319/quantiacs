@@ -383,9 +383,10 @@ def backtest(
             'stocks_nasdaq100': ['stocks_nasdaq100'],
             'cryptofutures': ['cryptofutures', 'crypto_futures'],
             'crypto': ['crypto'],
+            'cryptodaily': ['cryptodaily', 'crypto_daily', 'crypto_daily_long', 'crypto_daily_long_short'],
             'futures': ['futures']
         }
-        if data.name not in mismatches.get(competition_type, []):
+        if competition_type not in mismatches.get(data.name, [data.name]):
             log_err(
                 f"WARNING! The data type and the competition type are mismatched. Data type: {data.name}, competition type: {competition_type}")
 
