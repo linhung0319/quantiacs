@@ -169,7 +169,7 @@ def load_weights_list():
      :return:
      """
     track_event("DATA_INDEX_WEIGHTS_META")
-    uri = "idx/list?weights=True"
+    uri = "idx-weights/list"
     js = request_with_retry(uri, None)
     js = js.decode()
     idx = json.loads(js)
@@ -178,7 +178,7 @@ def load_weights_list():
 
 
 def load_weights(
-        index: str,
+        index_name: str,
         min_date: tp.Union[str, datetime.date, None] = None,
         max_date: tp.Union[str, datetime.date, None] = None,
         dims: tp.Tuple[str, str] = (ds.TIME, ds.ASSET),
@@ -188,7 +188,7 @@ def load_weights(
 
     """
     Load index constituents weights (benchmark).
-    :param index:
+    :param index_name:
     :param min_date:
     :param max_date:
     :param dims:
@@ -204,11 +204,13 @@ def load_weights(
     else:
         min_date = max_date - parse_tail(tail)
 
+    if min_date > max_date:
+        raise Exception("min_date must be less than or equal to max_date")
 
-    params = {"benchmark": index, "min_date": min_date.isoformat(), "max_date": max_date.isoformat()}
+    params = {"id": index_name, "min_date": min_date.isoformat(), "max_date": max_date.isoformat()}
     params = json.dumps(params)
     params = params.encode()
-    raw = request_with_retry("idx/data", params)
+    raw = request_with_retry("idx-weights/data", params)
 
     if raw is None or len(raw) < 1:
         arr = xr.DataArray(
@@ -224,7 +226,6 @@ def load_weights(
         arr = arr.compute()
 
     arr = arr.sortby(ds.TIME, ascending=forward_order)
-
     arr = arr.dropna(ds.TIME, how='all')
 
     arr.name = "index_weights"
