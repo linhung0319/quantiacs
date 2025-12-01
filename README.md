@@ -36,8 +36,8 @@ Quantiacs hosts a variety of quant competitions, catering to different asset cla
 
 ### Current Opportunity
 
-- [The Q23 S&P500 Long-Short Contest](https://quantiacs.com/contest): A specialized contest focusing on
-  long-short strategies in the S&P500.
+- [The Q24 Crypto Top-10 Long-Only Contest](https://quantiacs.com/contest): A specialized contest focusing on
+  top 10 cryptocurrencies by their market capitalization at a given point in time.
 
 Since 2014, Quantiacs has hosted numerous quantitative trading contests, allocating over 38 million USD to winning
 algorithms in futures markets. Since 2021, the platform has expanded to include contests for predicting futures,
