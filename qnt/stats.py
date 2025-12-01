@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 import gzip, base64, json
-from urllib import request
+from urllib import request, parse
 from tabulate import tabulate
 import numba
 import sys, os
@@ -851,9 +851,10 @@ def check_correlation(portfolio_history, data, print_stack_trace=True):
     track_event("CHECK_CORRELATION")
     portfolio_history = output_normalize(portfolio_history)
     rr = calc_relative_return(data, portfolio_history)
+    competition_type = data.name
 
     try:
-        cr_list = calc_correlation(rr, False)
+        cr_list = calc_correlation(rr, False, competition_type)
     except:
         import logging
         if print_stack_trace:
@@ -905,18 +906,26 @@ def check_correlation(portfolio_history, data, print_stack_trace=True):
 print_correlation = check_correlation
 
 
-def calc_correlation(relative_returns, suppress_exception=True):
+def calc_correlation(relative_returns, suppress_exception=True, competition_type=None):
     try:
         if "SUBMISSION_ID" in os.environ and os.environ["SUBMISSION_ID"] != "":
             log_info("correlation check disabled")
             return []
 
+        if not competition_type:
+            competition_type = 'all'
         ENGINE_CORRELATION_URL = get_env("ENGINE_CORRELATION_URL",
                                          "https://quantiacs.io/referee/submission/forCorrelation")
         STATAN_CORRELATION_URL = get_env("STATAN_CORRELATION_URL", "https://quantiacs.io/statan/correlation")
         PARTICIPANT_ID = get_env("PARTICIPANT_ID", "0")
+        correlation_params = {
+            'participantId': PARTICIPANT_ID,
+            'competitionType': competition_type,
+        }
+        correlation_query = parse.urlencode(correlation_params)
+        correlation_url = f"{ENGINE_CORRELATION_URL}?{correlation_query}"
 
-        with request.urlopen(ENGINE_CORRELATION_URL + "?participantId=" + PARTICIPANT_ID) as response:
+        with request.urlopen(correlation_url) as response:
             submissions = response.read()
             submissions = json.loads(submissions)
             submission_ids = [s['id'] for s in submissions]
@@ -927,8 +936,7 @@ def calc_correlation(relative_returns, suppress_exception=True):
         rr = rr.decode()
 
         cofactors = []
-
-        chunks = [submission_ids[x:x + 50] for x in range(0, len(submission_ids), 50)]
+        chunks = [submission_ids[x:x + 100] for x in range(0, len(submission_ids), 100)]
 
         for c in chunks:
             r = {"relative_returns": rr, "submission_ids": c}
