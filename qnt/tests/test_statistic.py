@@ -882,6 +882,87 @@ class TestBaseStatistic(unittest.TestCase):
                                     'volatility': 0.7305904423}],
                           'schema': EXPECTED_JSON_SCHEMA['statistic']}, json.loads(stat_tail))
 
+    def test_cryptodaily(self):
+        d = stats_data.get_cripto_daily()
+        buy_and_hold = d.sel(field="close") - d.sel(field="close") + 1
+        stat = qnstats.calc_stat(d, buy_and_hold)
+        stat_tail = stat.to_pandas().tail().to_json(orient="table")
+        stats_expected = [
+                                    {
+                                    "time" : "2015-02-25T00:00:00.000",
+                                    "equity" : 1.283406468,
+                                    "relative_return" : -0.0053911747,
+                                    "volatility" : 0.727408811,
+                                    "underwater" : -0.1345804446,
+                                    "max_drawdown" : -0.2083424427,
+                                    "sharpe_ratio" : 2.6021887567,
+                                    "mean_return" : 1.8928550296,
+                                    "bias" : 1.0,
+                                    "instruments" : 1.0,
+                                    "avg_turnover" : 0.0677576685,
+                                    "avg_holding_time" : None
+                                  }, {
+                                    "time" : "2015-02-26T00:00:00.000",
+                                    "equity" : 1.2767734584,
+                                    "relative_return" : -0.0051682844,
+                                    "volatility" : 0.7214673794,
+                                    "underwater" : -0.139053179,
+                                    "max_drawdown" : -0.2083424427,
+                                    "sharpe_ratio" : 2.5317179186,
+                                    "mean_return" : 1.8265518922,
+                                    "bias" : 1.0,
+                                    "instruments" : 1.0,
+                                    "avg_turnover" : 0.0665765325,
+                                    "avg_holding_time" : None
+                                  }, {
+                                    "time" : "2015-02-27T00:00:00.000",
+                                    "equity" : 1.3858977648,
+                                    "relative_return" : 0.0854688087,
+                                    "volatility" : 0.7426865161,
+                                    "underwater" : -0.0654690799,
+                                    "max_drawdown" : -0.2083424427,
+                                    "sharpe_ratio" : 3.1411956756,
+                                    "mean_return" : 2.3329236728,
+                                    "bias" : 1.0,
+                                    "instruments" : 1.0,
+                                    "avg_turnover" : 0.0668716606,
+                                    "avg_holding_time" : None
+                                  }, {
+                                    "time" : "2015-02-28T00:00:00.000",
+                                    "equity" : 1.3799653632,
+                                    "relative_return" : -0.0042805478,
+                                    "volatility" : 0.7368358361,
+                                    "underwater" : -0.0694693841,
+                                    "max_drawdown" : -0.2083424427,
+                                    "sharpe_ratio" : 3.0765349998,
+                                    "mean_return" : 2.2669012389,
+                                    "bias" : 1.0,
+                                    "instruments" : 1.0,
+                                    "avg_turnover" : 0.0672701772,
+                                    "avg_holding_time" : None
+                                  }, {
+                                    "time" : "2015-03-01T00:00:00.000",
+                                    "equity" : 1.4128588134,
+                                    "relative_return" : 0.0238364317,
+                                    "volatility" : 0.731940337,
+                                    "underwater" : -0.0472888546,
+                                    "max_drawdown" : -0.2083424427,
+                                    "sharpe_ratio" : 3.2436038723,
+                                    "mean_return" : 2.3741245114,
+                                    "bias" : 1.0,
+                                    "instruments" : 1.0,
+                                    "avg_turnover" : 0.0666073409,
+                                    "avg_holding_time" : 58.0
+                                  }
+        ]
+        self.assertNotEqual(d.name, 'cryptodaily')
+        self.assertNotEqual({'data': stats_expected, 'schema': EXPECTED_JSON_SCHEMA['statistic']}, json.loads(stat_tail))
+
+        d.name = 'cryptodaily'
+        stat_new = qnstats.calc_stat(d, buy_and_hold)
+        stat_new_tail = stat_new.to_pandas().tail().to_json(orient="table")
+        self.assertEqual({'data': stats_expected, 'schema': EXPECTED_JSON_SCHEMA['statistic']}, json.loads(stat_new_tail))
+
     def test_relative_return(self):
         # this code demonstrates the problem of calculating if nan is found in the sample
         #  {'time': '2021-02-13T00:00:00.000', 'values': 0.0},
