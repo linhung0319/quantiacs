@@ -324,18 +324,29 @@ def calc_max_drawdown(underwater):
     return (underwater).rolling({ds.TIME: len(underwater)}, min_periods=1).min()
 
 
-def calc_sharpe_ratio_annualized(relative_return, max_periods=None, min_periods=2, points_per_year=None):
+def calc_sharpe_ratio_annualized(relative_return, max_periods=None, min_periods=2, points_per_year=None,
+                                 mean_estimator="geometric"):
     """
     :param relative_return: daily return
     :param max_periods: maximal number of days
     :param min_periods: minimal number of days
+    :param points_per_year: number of bars per year
+    :param mean_estimator: mean estimator to use
     :return: annualized Sharpe ratio
     """
     if points_per_year is None:
         points_per_year = calc_avg_points_per_year(relative_return)
     if max_periods is None:
         max_periods = len(relative_return.time)
-    m = calc_mean_return_annualized(relative_return, max_periods, min_periods, points_per_year=points_per_year)
+    if mean_estimator == "geometric":
+        m = calc_mean_return_annualized(relative_return, max_periods, min_periods, points_per_year=points_per_year)
+    elif mean_estimator == "arithmetic":
+        m = calc_simple_mean_return_annualized(relative_return, max_periods, min_periods, points_per_year=points_per_year)
+    else:
+        raise ValueError(
+            f"Unknown mean_estimator='{mean_estimator}'. "
+            "Use 'arithmetic' or 'geometric'."
+        )
     v = calc_volatility_annualized(relative_return, max_periods, min_periods, points_per_year=points_per_year)
     sr = m / v
     return sr
@@ -370,6 +381,24 @@ def calc_mean_return_annualized(relative_return, max_periods=None, min_periods=1
 
     return np.power(calc_mean_return(relative_return, max_periods, min_periods, points_per_year=points_per_year) + 1,
                     points_per_year) - 1
+
+
+def calc_simple_mean_return_annualized(relative_return, max_periods=None, min_periods=1, points_per_year=None):
+    """
+    :param relative_return: daily return
+    :param max_periods: maximal number of days
+    :param min_periods: minimal number of days
+    :param points_per_year: number of bars per year
+    :return: annualized simple mean return
+    """
+    if points_per_year is None:
+        points_per_year = calc_avg_points_per_year(relative_return)
+    if max_periods is None:
+        max_periods = len(relative_return.coords[ds.TIME])
+    max_periods = min(max_periods, len(relative_return.coords[ds.TIME]))
+    min_periods = min(min_periods, max_periods)
+
+    return relative_return.rolling({ds.TIME: max_periods}, min_periods=min_periods).mean(skipna=True) * points_per_year
 
 
 def calc_bias(portfolio_history, per_asset=False):
@@ -734,10 +763,17 @@ def calc_stat(data, portfolio_history,
                                    points_per_year=points_per_year)
     U = calc_underwater(E)
     DD = calc_max_drawdown(U)
-    SR = calc_sharpe_ratio_annualized(RR, max_periods=max_periods, min_periods=min_periods,
-                                      points_per_year=points_per_year)
-    MR = calc_mean_return_annualized(RR, max_periods=max_periods, min_periods=min_periods,
-                                     points_per_year=points_per_year)
+    if data.name == 'cryptodaily':
+        SR = calc_sharpe_ratio_annualized(RR, max_periods=max_periods, min_periods=min_periods,
+                                         points_per_year=points_per_year, mean_estimator='arithmetic')
+        MR = calc_simple_mean_return_annualized(RR, max_periods=max_periods, min_periods=min_periods,
+                                         points_per_year=points_per_year)
+    else:
+        SR = calc_sharpe_ratio_annualized(RR, max_periods=max_periods, min_periods=min_periods,
+                                          points_per_year=points_per_year, mean_estimator='geometric')
+        MR = calc_mean_return_annualized(RR, max_periods=max_periods, min_periods=min_periods,
+                                         points_per_year=points_per_year)
+
     adj_data, adj_ph = arrange_data(data, portfolio_history, per_asset)
     B = calc_bias(adj_ph, per_asset)
     I = calc_instruments(adj_ph, per_asset)
@@ -875,9 +911,11 @@ def check_correlation(portfolio_history, data, print_stack_trace=True):
     log_info("The max correlation value (with systems with a larger Sharpe ratio):",
              max([i['cofactor'] for i in cr_list]))
     my_cr = [i for i in cr_list if i['my']]
+    mean_estimator = 'arithmetic' if data.name == 'cryptodaily' else 'geometric'
 
     log_info("Current sharpe ratio(3y):",
-             calc_sharpe_ratio_annualized(rr, calc_avg_points_per_year(data) * 3)[-1].values.item())
+             calc_sharpe_ratio_annualized(rr, max_periods=calc_avg_points_per_year(data) * 3,
+                                          mean_estimator=mean_estimator)[-1].values.item())
 
     log_info()
 

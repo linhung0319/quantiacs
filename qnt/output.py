@@ -282,6 +282,8 @@ def calc_sharpe_ratio_for_check(data, output, kind=None, check_dates=True):
     if kind is None:
         kind = data.name
 
+    mean_estimator = 'arithmetic' if kind in ['crypto_daily', 'cryptodaily', 'crypto_daily_long',
+                                              'crypto_daily_long_short'] else 'geometric'
     start_date = qns.get_default_is_start_date_for_type(kind)
     sdd = pd.Timestamp(start_date)
     osd = pd.Timestamp(output.where(abs(output).sum('asset') > 0).dropna('time', how='all').time.min().values)
@@ -304,7 +306,7 @@ def calc_sharpe_ratio_for_check(data, output, kind=None, check_dates=True):
     log_info("Period: " + str(sd.date()) + " - " + str(fd.date()))
     output_slice = align(output, data.time, sd, fd)
     rr = qns.calc_relative_return(data, output_slice)
-    sr = qns.calc_sharpe_ratio_annualized(rr)
+    sr = qns.calc_sharpe_ratio_annualized(rr, mean_estimator=mean_estimator)
     sr = sr.isel(time=-1).values
     return sr
 
