@@ -1,14 +1,14 @@
 """
-Strategy 1: 50/50 S&P500 + Cash — Threshold Rebalancing (10%)
---------------------------------------------------------------
-Allocation : 50% S&P 500 (equal-weight SPX500 basket) + 50% Cash
-Signal     : SPX index price
-Rule       : Rebalance back to 50/50 whenever SPX moves ±10% from the
-             last rebalance price. Between rebalances the allocation
-             drifts naturally with the market (no trading).
+Strategy 4: 50/50 S&P500 + Cash — Calendar Rebalancing (Monthly)
+-----------------------------------------------------------------
+Allocation : 50% S&P 500 + 50% Cash
+Rule       : Rebalance back to 50/50 on the first trading day of each
+             calendar month, regardless of market movement.
+             This tests whether time-based rebalancing beats threshold-based.
 """
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from strategies.base import (
@@ -17,52 +17,50 @@ from strategies.base import (
     RESULTS_DIR, START_DATE,
 )
 
-NAME        = "Strategy 1: 50/50 Threshold Rebalancing (10%)"
+NAME        = "Strategy 4: 50/50 Monthly Calendar Rebalancing"
 DESCRIPTION = (
     "Hold 50% in an equal-weight S&P 500 basket and 50% in cash. "
-    "Rebalance back to 50/50 whenever the SPX index moves ±10% from "
-    "the price at the last rebalance. Between rebalance events the "
-    "portfolio drifts freely — no daily trading."
+    "Rebalance back to 50/50 on the first trading day of every calendar month, "
+    "regardless of how much the market has moved. "
+    "Compares fixed-calendar rebalancing against threshold-based approaches."
 )
 PARAMS = {
-    "Target Allocation":      "50% stocks / 50% cash",
-    "Rebalance Trigger":      "±10% SPX price move from last rebalance",
-    "Stock Universe":         "S&P 500 constituents (equal-weight, liquid only)",
-    "Benchmark Signal":       "SPX index (daily close)",
+    "Target Allocation":  "50% stocks / 50% cash",
+    "Rebalance Schedule": "First trading day of each calendar month",
+    "Stock Universe":     "S&P 500 constituents (equal-weight, liquid only)",
 }
-THRESHOLD = 0.10
 
 
 # ─────────────────────────────────────────────
-# Core logic (pure, no qnt dependency)
+# Core logic
 # ─────────────────────────────────────────────
 
 def compute_total_etf_weight(
     spx_prices: np.ndarray,
-    threshold: float = THRESHOLD,
+    trading_dates: np.ndarray,
     target_alloc: float = 0.50,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Compute per-day total equity allocation using drift + threshold rebalancing.
-
-    Between rebalances the equity fraction drifts as:
-        w[t] = target * r / (target * r + (1 - target))
-        where r = spx[t] / spx[last_rebalance]
-
-    Rebalance triggers when |r - 1| >= threshold.
+    Drift between rebalances; force rebalance on month-start trading days.
     """
     n = len(spx_prices)
     weights = np.zeros(n)
     flags   = np.zeros(n, dtype=bool)
     last_p  = spx_prices[0]
 
+    dates = pd.DatetimeIndex(trading_dates)
+
     for i in range(n):
         p = spx_prices[i]
         if np.isnan(p) or p <= 0:
             weights[i] = weights[i - 1] if i > 0 else target_alloc
             continue
+
+        # First trading day of the month: month changes from prior day
+        is_month_start = (i == 0) or (dates[i].month != dates[i - 1].month)
+
         r = p / last_p
-        if abs(r - 1.0) >= threshold:
+        if is_month_start:
             weights[i] = target_alloc
             flags[i]   = True
             last_p     = p
@@ -77,10 +75,6 @@ def compute_total_etf_weight(
 # ─────────────────────────────────────────────
 
 def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
-    """
-    Run the strategy on pre-loaded data.
-    Returns (output, stats, metrics, period_str).
-    """
     times = spx_data.coords["time"].values
     spx_prices = (
         spx_index.sel(asset="SPX")
@@ -88,7 +82,7 @@ def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
         .values
     )
 
-    total_weights, flags = compute_total_etf_weight(spx_prices, THRESHOLD)
+    total_weights, flags = compute_total_etf_weight(spx_prices, times)
     output = build_output(spx_data, total_weights)
     stats, period_start = run_stats(spx_data, output)
 
@@ -97,15 +91,14 @@ def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
     print_metrics(metrics, period)
 
     save_md(NAME, DESCRIPTION, PARAMS, metrics, period,
-            f"{RESULTS_DIR}/strategy_01_results.md")
+            f"{RESULTS_DIR}/strategy_04_results.md")
     plot_strategy(NAME, spx_data, spx_index, output, stats, flags,
-                  f"{RESULTS_DIR}/strategy_01_chart.png")
+                  f"{RESULTS_DIR}/strategy_04_chart.png")
 
     return output, stats, metrics, flags
 
 
 def run_backtest():
-    """Standalone entry point."""
     print("=" * 60)
     print(NAME)
     print("=" * 60)

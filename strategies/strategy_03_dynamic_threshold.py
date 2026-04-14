@@ -1,11 +1,11 @@
 """
-Strategy 1: 50/50 S&P500 + Cash — Threshold Rebalancing (10%)
---------------------------------------------------------------
-Allocation : 50% S&P 500 (equal-weight SPX500 basket) + 50% Cash
-Signal     : SPX index price
-Rule       : Rebalance back to 50/50 whenever SPX moves ±10% from the
-             last rebalance price. Between rebalances the allocation
-             drifts naturally with the market (no trading).
+Strategy 3: 50/50 S&P500 + Cash — Dynamic Threshold (Bull/Bear Adaptive)
+-------------------------------------------------------------------------
+Allocation : 50% S&P 500 + 50% Cash
+Signal     : SPX 200-day moving average to classify market regime
+Rule       : Rebalance threshold adapts to market regime:
+               Bull (SPX > 200d MA)  →  ±15% threshold (patient, ride the trend)
+               Bear (SPX < 200d MA)  →  ±5%  threshold (defensive, rebalance sooner)
 """
 
 import numpy as np
@@ -17,50 +17,64 @@ from strategies.base import (
     RESULTS_DIR, START_DATE,
 )
 
-NAME        = "Strategy 1: 50/50 Threshold Rebalancing (10%)"
+NAME        = "Strategy 3: 50/50 Dynamic Threshold (Bull 15% / Bear 5%)"
 DESCRIPTION = (
-    "Hold 50% in an equal-weight S&P 500 basket and 50% in cash. "
-    "Rebalance back to 50/50 whenever the SPX index moves ±10% from "
-    "the price at the last rebalance. Between rebalance events the "
-    "portfolio drifts freely — no daily trading."
+    "Same 50/50 allocation as Strategy 1, but the rebalance trigger adapts "
+    "to the market regime detected by the 200-day moving average of SPX:\n"
+    "- Bull market (SPX > 200d MA): rebalance only when SPX moves ±15% "
+    "(let winners run longer).\n"
+    "- Bear market (SPX < 200d MA): rebalance at ±5% "
+    "(act more defensively to limit drawdown)."
 )
 PARAMS = {
     "Target Allocation":      "50% stocks / 50% cash",
-    "Rebalance Trigger":      "±10% SPX price move from last rebalance",
+    "Bull Market Threshold":  "±15% (SPX > 200-day MA)",
+    "Bear Market Threshold":  "±5%  (SPX < 200-day MA)",
+    "Regime Signal":          "SPX 200-day simple moving average",
     "Stock Universe":         "S&P 500 constituents (equal-weight, liquid only)",
-    "Benchmark Signal":       "SPX index (daily close)",
 }
-THRESHOLD = 0.10
+
+BULL_THRESHOLD = 0.15
+BEAR_THRESHOLD = 0.05
+MA_PERIOD      = 200
 
 
 # ─────────────────────────────────────────────
-# Core logic (pure, no qnt dependency)
+# Core logic
 # ─────────────────────────────────────────────
 
 def compute_total_etf_weight(
     spx_prices: np.ndarray,
-    threshold: float = THRESHOLD,
+    bull_threshold: float = BULL_THRESHOLD,
+    bear_threshold: float = BEAR_THRESHOLD,
+    ma_period: int = MA_PERIOD,
     target_alloc: float = 0.50,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Compute per-day total equity allocation using drift + threshold rebalancing.
-
-    Between rebalances the equity fraction drifts as:
-        w[t] = target * r / (target * r + (1 - target))
-        where r = spx[t] / spx[last_rebalance]
-
-    Rebalance triggers when |r - 1| >= threshold.
+    Drift-based rebalancing with regime-adaptive threshold.
     """
     n = len(spx_prices)
     weights = np.zeros(n)
     flags   = np.zeros(n, dtype=bool)
     last_p  = spx_prices[0]
 
+    # Compute 200-day MA (vectorized for speed, then iterate for state)
+    ma = np.full(n, np.nan)
+    for i in range(ma_period - 1, n):
+        ma[i] = np.nanmean(spx_prices[i - ma_period + 1 : i + 1])
+
     for i in range(n):
         p = spx_prices[i]
         if np.isnan(p) or p <= 0:
             weights[i] = weights[i - 1] if i > 0 else target_alloc
             continue
+
+        # Choose threshold based on regime
+        if np.isnan(ma[i]):
+            threshold = bear_threshold          # conservative before MA is ready
+        else:
+            threshold = bull_threshold if p > ma[i] else bear_threshold
+
         r = p / last_p
         if abs(r - 1.0) >= threshold:
             weights[i] = target_alloc
@@ -77,10 +91,6 @@ def compute_total_etf_weight(
 # ─────────────────────────────────────────────
 
 def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
-    """
-    Run the strategy on pre-loaded data.
-    Returns (output, stats, metrics, period_str).
-    """
     times = spx_data.coords["time"].values
     spx_prices = (
         spx_index.sel(asset="SPX")
@@ -88,7 +98,7 @@ def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
         .values
     )
 
-    total_weights, flags = compute_total_etf_weight(spx_prices, THRESHOLD)
+    total_weights, flags = compute_total_etf_weight(spx_prices)
     output = build_output(spx_data, total_weights)
     stats, period_start = run_stats(spx_data, output)
 
@@ -97,15 +107,14 @@ def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
     print_metrics(metrics, period)
 
     save_md(NAME, DESCRIPTION, PARAMS, metrics, period,
-            f"{RESULTS_DIR}/strategy_01_results.md")
+            f"{RESULTS_DIR}/strategy_03_results.md")
     plot_strategy(NAME, spx_data, spx_index, output, stats, flags,
-                  f"{RESULTS_DIR}/strategy_01_chart.png")
+                  f"{RESULTS_DIR}/strategy_03_chart.png")
 
     return output, stats, metrics, flags
 
 
 def run_backtest():
-    """Standalone entry point."""
     print("=" * 60)
     print(NAME)
     print("=" * 60)
