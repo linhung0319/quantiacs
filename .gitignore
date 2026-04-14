@@ -1,6 +1,11 @@
+.env
 /.idea/
 /.ipynb_checkpoints/
 /__pycache__/
+**/__pycache__/
+*.egg-info/
+.venv/
+.claude/
 ^.*/
 fractions.csv
 stat.csv
