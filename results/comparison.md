@@ -4,17 +4,17 @@
 
 ## Performance Summary
 
-| Metric | S1: 50/50 Threshold 10% | S2: Buy & Hold 100% | S3: Dynamic 15%/5% | S4: Monthly Rebalance | S5: MA Timing 200d |
-|--------| :---: | :---: | :---: | :---: | :---: |
-| Sharpe Ratio | 0.4803 | 0.4395 | 0.4847 | **0.4932** ★ | 0.4733 |
-| Annual Return | 5.17% | **9.41%** ★ | 5.26% | 5.21% | 5.84% |
-| Volatility | 10.75% | 21.42% | 10.86% | **10.56%** ★ | 12.33% |
-| Max Drawdown | -35.73% | **-61.08%** ★ | -35.81% | -35.93% | -24.36% |
-| Calmar Ratio | 0.1445 | 0.1541 | 0.1470 | 0.1449 | **0.2396** ★ |
-| Sortino Ratio | 0.5855 | 0.5380 | 0.5918 | **0.6049** ★ | 0.5428 |
-| Avg Turnover | 1.09% | 2.37% | 1.12% | **1.09%** ★ | 4.09% |
-| Total Return | 163.45% | **464.25%** ★ | 168.23% | 165.42% | 197.76% |
-| # Rebalances / Switches | 52 | **0** ★ | 116 | 244 | 127 |
+| Metric | S1: 50/50 Threshold 10% | S2: Buy & Hold 100% | S3: Dynamic 15%/5% | S4: Monthly Rebalance | S5: MA Timing 200d | S6: 50/50 Threshold 5% | S7: 50/50 Threshold 20% |
+|--------| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| Sharpe Ratio | 0.4803 | 0.4395 | 0.4847 | 0.4932 | 0.4733 | 0.4834 | **0.4942** ★ |
+| Annual Return | 5.17% | **9.41%** ★ | 5.26% | 5.21% | 5.84% | 5.21% | 5.30% |
+| Volatility | 10.75% | 21.42% | 10.86% | **10.56%** ★ | 12.33% | 10.79% | 10.73% |
+| Max Drawdown | -35.73% | **-61.08%** ★ | -35.81% | -35.93% | -24.36% | -35.60% | -35.31% |
+| Calmar Ratio | 0.1445 | 0.1541 | 0.1470 | 0.1449 | **0.2396** ★ | 0.1465 | 0.1502 |
+| Sortino Ratio | 0.5855 | 0.5380 | 0.5918 | 0.6049 | 0.5428 | 0.5885 | **0.6062** ★ |
+| Avg Turnover | 1.09% | 2.37% | 1.12% | **1.09%** ★ | 4.09% | 1.10% | 1.10% |
+| Total Return | 163.45% | **464.25%** ★ | 168.23% | 165.42% | 197.76% | 165.84% | 170.23% |
+| # Rebalances / Switches | 52 | **0** ★ | 116 | 244 | 127 | 201 | 18 |
 
 ## Strategy Descriptions
 
@@ -39,3 +39,11 @@ Hold 50% in an equal-weight S&P 500 basket and 50% in cash. Rebalance back to 50
 ### Strategy 5: MA Market Timing (200-day)
 
 Use the SPX 200-day simple moving average as a market regime filter. When SPX is above the 200d MA (bullish trend), hold 100% in an equal-weight S&P 500 basket. When SPX is below (bearish), move entirely to cash. Signal is computed at close and executed at the next open. Unlike Strategies 1-4 there is no fixed 50/50 split — this is a binary 'risk-on / risk-off' approach.
+
+### Strategy 6: 50/50 Threshold Rebalancing (5%)
+
+Identical to Strategy 1 but with a tighter ±5% rebalance trigger. The portfolio rebalances back to 50/50 more frequently, keeping the allocation closer to target at the cost of more trades.
+
+### Strategy 7: 50/50 Threshold Rebalancing (20%)
+
+Identical to Strategy 1 but with a wider ±20% rebalance trigger. The portfolio is rebalanced back to 50/50 less frequently, allowing larger allocation drifts while minimising transaction costs.

@@ -17,6 +17,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from tabulate import tabulate
 
 from strategies.base import load_market_data, RESULTS_DIR, START_DATE
@@ -25,6 +26,8 @@ import strategies.strategy_02_buy_hold          as s2
 import strategies.strategy_03_dynamic_threshold as s3
 import strategies.strategy_04_monthly_rebalance as s4
 import strategies.strategy_05_ma_timing         as s5
+import strategies.strategy_06_rebalance_5pct    as s6
+import strategies.strategy_07_rebalance_20pct   as s7
 
 
 # ─────────────────────────────────────────────
@@ -118,31 +121,49 @@ def save_comparison_md(results: list[dict], period: str):
 
 
 def plot_comparison(results: list[dict]):
-    colors = plt.cm.tab10.colors
+    # High-contrast palette for up to 7 strategies
+    COLORS = [
+        "#1f77b4",  # blue
+        "#d62728",  # red
+        "#2ca02c",  # green
+        "#ff7f0e",  # orange
+        "#9467bd",  # purple
+        "#8c564b",  # brown
+        "#e377c2",  # pink
+    ]
+    STYLES = ["-", "--", "-.", ":", "-", "--", "-."]
+
     fig, axes = plt.subplots(2, 1, figsize=(14, 9), sharex=True)
 
     for i, r in enumerate(results):
-        c = colors[i % len(colors)]
+        c  = COLORS[i % len(COLORS)]
+        ls = STYLES[i % len(STYLES)]
         df = r["stats"].to_pandas()
-        equity    = df["equity"].dropna()
+        equity     = df["equity"].dropna()
         underwater = df["underwater"].dropna()
-        axes[0].plot(equity.index, equity.values, label=r["name_short"], color=c, linewidth=1.5)
-        axes[1].fill_between(underwater.index, underwater.values, 0,
-                             alpha=0.35, color=c, label=r["name_short"])
+        axes[0].plot(equity.index, equity.values,
+                     label=r["name_short"], color=c, linewidth=1.8, linestyle=ls)
+        axes[1].plot(underwater.index, underwater.values,
+                     label=r["name_short"], color=c, linewidth=1.5, linestyle=ls)
 
     axes[0].set_ylabel("Equity (start=1)")
     axes[0].set_title("Equity Curves — All Strategies")
-    axes[0].legend(loc="upper left", fontsize=9)
+    axes[0].legend(loc="upper left", fontsize=8)
     axes[0].grid(True, alpha=0.3)
 
     axes[1].set_ylabel("Drawdown")
-    axes[1].set_title("Underwater (Drawdown) — All Strategies")
-    axes[1].legend(loc="lower left", fontsize=9)
+    axes[1].set_title("Drawdown — All Strategies")
+    axes[1].legend(loc="lower left", fontsize=8)
     axes[1].grid(True, alpha=0.3)
+
+    for ax in axes:
+        ax.xaxis.set_major_locator(mdates.YearLocator(1))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    plt.setp(axes[-1].get_xticklabels(), rotation=45, ha="right", fontsize=8)
 
     plt.tight_layout()
     path = f"{RESULTS_DIR}/comparison_chart.png"
-    plt.savefig(path, dpi=150)
+    plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"Comparison chart saved to {path}")
 
@@ -168,6 +189,8 @@ def main():
         (s3, "S3: Dynamic 15%/5%"),
         (s4, "S4: Monthly Rebalance"),
         (s5, "S5: MA Timing 200d"),
+        (s6, "S6: 50/50 Threshold 5%"),
+        (s7, "S7: 50/50 Threshold 20%"),
     ]
 
     for module, short_name in strategies:

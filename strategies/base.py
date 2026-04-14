@@ -14,6 +14,7 @@ import xarray as xr
 import matplotlib
 matplotlib.use("Agg")          # headless rendering — no GUI window needed
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 import qnt.data as qndata
 import qnt.stats as qnstats
@@ -236,46 +237,55 @@ def plot_strategy(
     fig, axes = plt.subplots(3, 1, figsize=(14, 11), sharex=True)
     fig.suptitle(strategy_title, fontsize=13)
 
-    # Panel 1: Equity curve
+    # ── Panel 1: Equity curve ──────────────────────────────────
     ax1 = axes[0]
     equity = df_stats["equity"].dropna()
-    ax1.plot(equity.index, equity.values, color="steelblue", linewidth=1.5, label="Strategy Equity")
-    ax1.plot(spx_norm.index, spx_norm.values, color="gray", linewidth=1,
-             alpha=0.6, linestyle="--", label="SPX (normalized)")
+    ax1.plot(equity.index, equity.values,
+             color="#1f77b4", linewidth=1.8, label="Strategy Equity")
+    ax1.plot(spx_norm.index, spx_norm.values,
+             color="#ff7f0e", linewidth=1.2, linestyle="--",
+             alpha=0.85, label="SPX (normalized)")
     ax1.set_ylabel("Equity (start=1)")
-    ax1.set_title("Equity Curve")
+    ax1.set_title("Panel 1 — Equity Curve")
     ax1.legend(loc="upper left")
     ax1.grid(True, alpha=0.3)
 
-    # Panel 2: SPX + rebalance points
+    # ── Panel 2: SPX + rebalance points ───────────────────────
     ax2 = axes[1]
-    ax2.plot(spx_price.index, spx_price.values, color="darkorange",
-             linewidth=1, alpha=0.8, label="SPX Close")
+    ax2.plot(spx_price.index, spx_price.values,
+             color="#1f77b4", linewidth=1.2, label="SPX Close")
     if rebalance_flags is not None and rebalance_flags.sum() > 0:
-        rb_dates = pd.to_datetime(times[rebalance_flags])
+        rb_dates  = pd.to_datetime(times[rebalance_flags])
         rb_prices = spx_price.reindex(rb_dates, method="nearest")
-        ax2.scatter(rb_prices.index, rb_prices.values, color="red", s=25,
-                    zorder=5, label=f"Rebalance ({rebalance_flags.sum()} times)")
+        ax2.scatter(rb_prices.index, rb_prices.values,
+                    color="#d62728", s=28, zorder=5,
+                    label=f"Rebalance / Switch ({int(rebalance_flags.sum())} times)")
     ax2.set_ylabel("SPX Level")
-    ax2.set_title("SPX Index & Rebalance Points")
+    ax2.set_title("Panel 2 — SPX Index & Rebalance Points")
     ax2.legend(loc="upper left")
     ax2.grid(True, alpha=0.3)
 
-    # Panel 3: Allocation
+    # ── Panel 3: Allocation (lines, high-contrast) ─────────────
     ax3 = axes[2]
-    ax3.fill_between(total_etf_weight.index, total_etf_weight.values,
-                     alpha=0.55, color="steelblue", label="S&P 500")
     cash = (1 - total_etf_weight).clip(lower=0)
-    ax3.fill_between(total_etf_weight.index, cash.values, total_etf_weight.values,
-                     alpha=0.3, color="lightgray", label="Cash")
-    ax3.axhline(0.5, color="black", linestyle="--", linewidth=0.8, alpha=0.6)
-    ax3.set_ylim(0, 1.05)
-    ax3.set_ylabel("Allocation")
-    ax3.set_title("Equity / Cash Allocation")
+    ax3.plot(total_etf_weight.index, total_etf_weight.values,
+             color="#1f77b4", linewidth=1.6, label="S&P 500 allocation")
+    ax3.plot(cash.index, cash.values,
+             color="#d62728", linewidth=1.6, linestyle="--", label="Cash allocation")
+    ax3.axhline(0.5, color="black", linestyle=":", linewidth=0.9, alpha=0.5)
+    ax3.set_ylim(-0.03, 1.08)
+    ax3.set_ylabel("Allocation (fraction)")
+    ax3.set_title("Panel 3 — S&P 500 vs Cash Allocation Over Time")
     ax3.legend(loc="upper left")
     ax3.grid(True, alpha=0.3)
 
+    # ── X-axis: 1-year ticks on all panels ─────────────────────
+    for ax in axes:
+        ax.xaxis.set_major_locator(mdates.YearLocator(1))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    plt.setp(axes[-1].get_xticklabels(), rotation=45, ha="right", fontsize=8)
+
     plt.tight_layout()
-    plt.savefig(save_path, dpi=150)
+    plt.savefig(save_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  Chart saved to {save_path}")
