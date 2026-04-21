@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from tabulate import tabulate
 
-from strategies.base import load_market_data, RESULTS_DIR, START_DATE
+from strategies.base import load_market_data, calc_cap_weights, RESULTS_DIR, START_DATE
 import strategies.strategy_01_rebalance_10pct   as s1
 import strategies.strategy_02_buy_hold          as s2
 import strategies.strategy_03_dynamic_threshold as s3
@@ -181,6 +181,9 @@ def main():
     print("\n[DATA] Loading market data...")
     spx_data, spx_index = load_market_data(START_DATE)
 
+    print("\n[DATA] Computing market-cap proxy weights...")
+    cap_weights = calc_cap_weights(spx_data)
+
     all_results = []
 
     strategies = [
@@ -197,7 +200,7 @@ def main():
         print(f"\n{'─' * 60}")
         print(f"Running {module.NAME}")
         print("─" * 60)
-        _output, _stats, _metrics, _flags = module.run(spx_data, spx_index)
+        _output, _stats, _metrics, _flags = module.run(spx_data, spx_index, cap_weights)
         all_results.append({
             "name":       module.NAME,
             "name_short": short_name,

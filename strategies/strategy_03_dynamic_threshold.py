@@ -1,18 +1,23 @@
 """
 Strategy 3: 50/50 S&P500 + Cash — Dynamic Threshold (Bull/Bear Adaptive)
 -------------------------------------------------------------------------
-Allocation : 50% S&P 500 + 50% Cash
-Signal     : SPX 200-day moving average to classify market regime
-Rule       : Rebalance threshold adapts to market regime:
-               Bull (SPX > 200d MA)  →  ±15% threshold (patient, ride the trend)
-               Bear (SPX < 200d MA)  →  ±5%  threshold (defensive, rebalance sooner)
+【策略邏輯】
+  目標配置：50% S&P 500 成分股籃 + 50% 現金
+  訊號來源：SPX 200 日移動平均線（判斷多空市場）
+  觸發規則（依市場環境動態調整）：
+    多頭市場（SPX > 200 日 MA）→ 閾值 ±15%（讓趨勢跑，減少交易）
+    空頭市場（SPX < 200 日 MA）→ 閾值 ±5%（更積極防守，早點再平衡）
+
+【與 S1 的差異】
+  S1 固定使用 ±10% 閾值；本策略在多/空頭間自動切換 15%/5%，
+  試圖在牛市減少摩擦、熊市加強防守。
 """
 
 import numpy as np
 import xarray as xr
 
 from strategies.base import (
-    load_market_data, build_output, run_stats,
+    load_market_data, calc_cap_weights, build_output, run_stats,
     calc_metrics, print_metrics, save_md, plot_strategy,
     RESULTS_DIR, START_DATE,
 )
@@ -31,7 +36,7 @@ PARAMS = {
     "Bull Market Threshold":  "±15% (SPX > 200-day MA)",
     "Bear Market Threshold":  "±5%  (SPX < 200-day MA)",
     "Regime Signal":          "SPX 200-day simple moving average",
-    "Stock Universe":         "S&P 500 constituents (equal-weight, liquid only)",
+    "Stock Universe":         "S&P 500 constituents (market-cap proxy weight, liquid only)",
 }
 
 BULL_THRESHOLD = 0.15
@@ -90,7 +95,7 @@ def compute_total_etf_weight(
 # Strategy runner
 # ─────────────────────────────────────────────
 
-def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
+def run(spx_data: xr.DataArray, spx_index: xr.DataArray, cap_weights=None):
     times = spx_data.coords["time"].values
     spx_prices = (
         spx_index.sel(asset="SPX")
@@ -98,8 +103,11 @@ def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
         .values
     )
 
+    if cap_weights is None:
+        cap_weights = calc_cap_weights(spx_data)
+
     total_weights, flags = compute_total_etf_weight(spx_prices)
-    output = build_output(spx_data, total_weights)
+    output = build_output(spx_data, total_weights, cap_weights)
     stats, period_start = run_stats(spx_data, output)
 
     period = f"{period_start} to {str(spx_data.time.values[-1])[:10]}"
@@ -119,7 +127,8 @@ def run_backtest():
     print(NAME)
     print("=" * 60)
     spx_data, spx_index = load_market_data(START_DATE)
-    return run(spx_data, spx_index)
+    cap_weights = calc_cap_weights(spx_data)
+    return run(spx_data, spx_index, cap_weights)
 
 
 if __name__ == "__main__":

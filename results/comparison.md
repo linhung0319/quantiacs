@@ -1,26 +1,26 @@
 # Strategy Comparison
 
-**Backtest period:** 2007-01-03 to 2026-04-09
+**Backtest period:** 2008-01-03 to 2026-04-16
 
 ## Performance Summary
 
 | Metric | S1: 50/50 Threshold 10% | S2: Buy & Hold 100% | S3: Dynamic 15%/5% | S4: Monthly Rebalance | S5: MA Timing 200d | S6: 50/50 Threshold 5% | S7: 50/50 Threshold 20% |
 |--------| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| Sharpe Ratio | 0.4803 | 0.4395 | 0.4847 | 0.4932 | 0.4733 | 0.4834 | **0.4942** ★ |
-| Annual Return | 5.17% | **9.41%** ★ | 5.26% | 5.21% | 5.84% | 5.21% | 5.30% |
-| Volatility | 10.75% | 21.42% | 10.86% | **10.56%** ★ | 12.33% | 10.79% | 10.73% |
-| Max Drawdown | -35.73% | **-61.08%** ★ | -35.81% | -35.93% | -24.36% | -35.60% | -35.31% |
-| Calmar Ratio | 0.1445 | 0.1541 | 0.1470 | 0.1449 | **0.2396** ★ | 0.1465 | 0.1502 |
-| Sortino Ratio | 0.5855 | 0.5380 | 0.5918 | 0.6049 | 0.5428 | 0.5885 | **0.6062** ★ |
-| Avg Turnover | 1.09% | 2.37% | 1.12% | **1.09%** ★ | 4.09% | 1.10% | 1.10% |
-| Total Return | 163.45% | **464.25%** ★ | 168.23% | 165.42% | 197.76% | 165.84% | 170.23% |
-| # Rebalances / Switches | 52 | **0** ★ | 116 | 244 | 127 | 201 | 18 |
+| Sharpe Ratio | 0.5487 | 0.5039 | 0.5561 | **0.5586** ★ | 0.5506 | 0.5534 | 0.5578 |
+| Annual Return | 6.22% | **11.36%** ★ | 6.37% | 6.22% | 7.14% | 6.29% | 6.30% |
+| Volatility | 11.33% | 22.55% | 11.45% | **11.14%** ★ | 12.98% | 11.37% | 11.29% |
+| Max Drawdown | -35.54% | **-61.04%** ★ | -35.30% | -35.81% | -26.45% | -35.30% | -35.59% |
+| Calmar Ratio | 0.1749 | 0.1862 | 0.1803 | 0.1738 | **0.2701** ★ | 0.1783 | 0.1770 |
+| Sortino Ratio | 0.6810 | 0.6263 | 0.6909 | 0.6955 | 0.6031 | 0.6857 | **0.6968** ★ |
+| Avg Turnover | 0.98% | 2.15% | 1.01% | **0.98%** ★ | 3.66% | 1.00% | 0.99% |
+| Total Return | 220.86% | **700.99%** ★ | 229.66% | 221.34% | 279.64% | 225.37% | 225.67% |
+| # Rebalances / Switches | 51 | **0** ★ | 122 | 232 | 117 | 200 | 17 |
 
 ## Strategy Descriptions
 
 ### Strategy 1: 50/50 Threshold Rebalancing (10%)
 
-Hold 50% in an equal-weight S&P 500 basket and 50% in cash. Rebalance back to 50/50 whenever the SPX index moves ±10% from the price at the last rebalance. Between rebalance events the portfolio drifts freely — no daily trading.
+Hold 50% in a market-cap-weighted S&P 500 basket and 50% in cash. Rebalance back to 50/50 whenever the SPX index moves ±10% from the price at the last rebalance. Between rebalance events the portfolio drifts freely — no daily trading.
 
 ### Strategy 2: 100% S&P500 Buy & Hold (Benchmark)
 

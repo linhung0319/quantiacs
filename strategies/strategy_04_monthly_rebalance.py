@@ -1,10 +1,16 @@
 """
 Strategy 4: 50/50 S&P500 + Cash — Calendar Rebalancing (Monthly)
 -----------------------------------------------------------------
-Allocation : 50% S&P 500 + 50% Cash
-Rule       : Rebalance back to 50/50 on the first trading day of each
-             calendar month, regardless of market movement.
-             This tests whether time-based rebalancing beats threshold-based.
+【策略邏輯】
+  目標配置：50% S&P 500 成分股籃 + 50% 現金
+  觸發規則：每個月的第一個交易日，無條件再平衡回 50/50
+            不管市場漲跌，固定時間執行
+
+【與 S1 的差異】
+  S1 是看市場漲跌幅決定是否再平衡（事件驅動）；
+  本策略是看月曆決定（時間驅動）。
+  兩次再平衡之間同樣讓配置自然漂移。
+  目的：測試「固定頻率再平衡」vs「閾值觸發再平衡」哪個更有效。
 """
 
 import numpy as np
@@ -12,7 +18,7 @@ import pandas as pd
 import xarray as xr
 
 from strategies.base import (
-    load_market_data, build_output, run_stats,
+    load_market_data, calc_cap_weights, build_output, run_stats,
     calc_metrics, print_metrics, save_md, plot_strategy,
     RESULTS_DIR, START_DATE,
 )
@@ -27,7 +33,7 @@ DESCRIPTION = (
 PARAMS = {
     "Target Allocation":  "50% stocks / 50% cash",
     "Rebalance Schedule": "First trading day of each calendar month",
-    "Stock Universe":     "S&P 500 constituents (equal-weight, liquid only)",
+    "Stock Universe":     "S&P 500 constituents (market-cap proxy weight, liquid only)",
 }
 
 
@@ -74,7 +80,7 @@ def compute_total_etf_weight(
 # Strategy runner
 # ─────────────────────────────────────────────
 
-def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
+def run(spx_data: xr.DataArray, spx_index: xr.DataArray, cap_weights=None):
     times = spx_data.coords["time"].values
     spx_prices = (
         spx_index.sel(asset="SPX")
@@ -82,8 +88,11 @@ def run(spx_data: xr.DataArray, spx_index: xr.DataArray):
         .values
     )
 
+    if cap_weights is None:
+        cap_weights = calc_cap_weights(spx_data)
+
     total_weights, flags = compute_total_etf_weight(spx_prices, times)
-    output = build_output(spx_data, total_weights)
+    output = build_output(spx_data, total_weights, cap_weights)
     stats, period_start = run_stats(spx_data, output)
 
     period = f"{period_start} to {str(spx_data.time.values[-1])[:10]}"
@@ -103,7 +112,8 @@ def run_backtest():
     print(NAME)
     print("=" * 60)
     spx_data, spx_index = load_market_data(START_DATE)
-    return run(spx_data, spx_index)
+    cap_weights = calc_cap_weights(spx_data)
+    return run(spx_data, spx_index, cap_weights)
 
 
 if __name__ == "__main__":
